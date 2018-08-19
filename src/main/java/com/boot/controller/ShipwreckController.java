@@ -1,7 +1,9 @@
 package com.boot.controller;
 
 import com.boot.model.Shipwreck;
-import com.boot.model.ShipwreckStub;
+import com.boot.repository.ShipwreckRepository;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -10,28 +12,39 @@ import java.util.List;
 @RequestMapping("api/v1/")
 public class ShipwreckController {
 
+    private final ShipwreckRepository repository;
+
+    @Autowired
+    public ShipwreckController(ShipwreckRepository repository) {
+        this.repository = repository;
+    }
+
     @RequestMapping(value = "shipwrecks", method = RequestMethod.GET)
     public List<Shipwreck> list() {
-        return ShipwreckStub.list();
+        return repository.findAll();
     }
 
     @RequestMapping(value = "shipwrecks", method = RequestMethod.POST)
     public Shipwreck create(@RequestBody Shipwreck shipwreck) {
-        return ShipwreckStub.create(shipwreck);
+        return repository.save(shipwreck);
     }
 
     @RequestMapping(value = "shipwrecks/{id}", method = RequestMethod.GET)
     public Shipwreck get(@PathVariable Long id) {
-        return ShipwreckStub.get(id);
+        return repository.getOne(id);
     }
 
     @RequestMapping(value = "shipwrecks/{id}", method = RequestMethod.PUT)
     public Shipwreck update(@PathVariable Long id, @RequestBody Shipwreck shipwreck) {
-        return ShipwreckStub.update(id, shipwreck);
+        var existing = repository.findById(id).orElseThrow();
+        BeanUtils.copyProperties(shipwreck, existing);
+        return repository.saveAndFlush(existing);
     }
 
     @RequestMapping(value = "shipwrecks/{id}", method = RequestMethod.DELETE)
     public Shipwreck delete(@PathVariable Long id) {
-        return ShipwreckStub.delete(id);
+        var shipwreck = repository.findById(id).orElseThrow();
+        repository.deleteById(id);
+        return shipwreck;
     }
 }
